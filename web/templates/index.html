@@ -1,0 +1,861 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoShield AI | Road Damage Detection</title>
+
+    <style>
+        :root {
+            --bg: #0b1120;
+            --panel: #131e30;
+            --panel-light: #1b2940;
+            --border: #2b3b52;
+            --text: #e5edf7;
+            --muted: #93a4ba;
+            --accent: #38bdf8;
+            --green: #34d399;
+            --red: #fb7185;
+            --yellow: #fbbf24;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.6;
+        }
+
+        header {
+            padding: 20px 7%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+            background: #0e1728;
+        }
+
+        .brand {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .brand span {
+            color: var(--accent);
+        }
+
+        .status-badge {
+            border: 1px solid #236b55;
+            background: #102e29;
+            color: var(--green);
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+        }
+
+        main {
+            width: min(1100px, 92%);
+            margin: 36px auto;
+        }
+
+        .hero {
+            margin-bottom: 28px;
+        }
+
+        .eyebrow {
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: clamp(30px, 5vw, 46px);
+            line-height: 1.15;
+            margin: 10px 0;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            max-width: 680px;
+        }
+
+        .panel {
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: var(--panel);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 21px;
+        }
+
+        .upload-area {
+            border: 2px dashed #3c526e;
+            background: #101a2b;
+            border-radius: 12px;
+            min-height: 180px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 8px;
+        }
+
+        .upload-icon {
+            font-size: 38px;
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        input[type="file"] {
+            display: block;
+            max-width: 100%;
+            margin: 12px auto;
+            color: var(--muted);
+        }
+
+        button {
+            border: 0;
+            border-radius: 9px;
+            background: var(--accent);
+            color: #061321;
+            padding: 13px 22px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .secondary {
+            background: var(--panel-light);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .preview-wrap {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .preview-wrap img,
+        .result-image {
+            display: block;
+            max-width: 100%;
+            max-height: 480px;
+            object-fit: contain;
+            margin: 14px auto;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .message {
+            padding: 13px 15px;
+            margin-top: 16px;
+            border-radius: 9px;
+            overflow-wrap: anywhere;
+        }
+
+        .message.info {
+            background: #11283b;
+            color: #7dd3fc;
+        }
+
+        .message.success {
+            background: #102e29;
+            color: var(--green);
+        }
+
+        .message.error {
+            background: #3a1823;
+            color: #fda4af;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 15px;
+            margin-bottom: 22px;
+        }
+
+        .stat {
+            padding: 18px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--panel-light);
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .stat-value {
+            display: block;
+            margin-top: 8px;
+            font-size: 25px;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .result-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .detection {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #101a2b;
+        }
+
+        .detection-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-weight: bold;
+        }
+
+        .confidence-track {
+            margin-top: 12px;
+            height: 7px;
+            background: #304057;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .confidence-bar {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 8px;
+        }
+
+        .risk {
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: #101a2b;
+        }
+
+        .risk-value {
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .risk-low {
+            color: var(--green);
+        }
+
+        .risk-medium {
+            color: var(--yellow);
+        }
+
+        .risk-high {
+            color: var(--red);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        footer {
+            padding: 24px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        @media (max-width: 650px) {
+            header {
+                padding: 18px 5%;
+            }
+
+            main {
+                width: 92%;
+                margin-top: 24px;
+            }
+
+            .panel {
+                padding: 17px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-value {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="brand">🛡️ GeoShield <span>AI</span></div>
+        <div class="status-badge">● ROAD ANALYSIS SYSTEM</div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="eyebrow">Intelligent Road Monitoring</div>
+            <h1>AI-Powered Road Damage Detection</h1>
+            <p class="subtitle">
+                Upload a road image to identify visible damage using
+                computer vision and your GeoShield YOLO model.
+            </p>
+        </section>
+
+        <section class="panel">
+            <h2>Analyze Road Image</h2>
+            <p class="muted">
+                Select a JPG, PNG, WEBP, or BMP image. Maximum size: 10 MB.
+            </p>
+
+            <form id="uploadForm">
+                <div class="upload-area">
+                    <div class="upload-icon">📷</div>
+                    <strong>Select a road image</strong>
+                    <span class="muted">
+                        Choose a clear image of the road surface
+                    </span>
+
+                    <input
+                        type="file"
+                        id="imageInput"
+                        name="image"
+                        accept=".jpg,.jpeg,.png,.webp,.bmp,image/*"
+                        required
+                    >
+                </div>
+
+                <div id="previewWrap" class="preview-wrap hidden">
+                    <p class="muted">Image preview</p>
+                    <img id="previewImage" alt="Selected road image">
+                    <button
+                        type="button"
+                        id="removeButton"
+                        class="secondary"
+                    >
+                        Remove image
+                    </button>
+                </div>
+
+                <div class="actions">
+                    <button type="submit" id="analyzeButton">
+                        Analyze Image
+                    </button>
+                </div>
+            </form>
+
+            <div id="statusMessage" class="message hidden"
+                 role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="results" class="panel hidden" aria-live="polite">
+            <h2>Detection Results</h2>
+
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-label">Total detections</span>
+                    <span class="stat-value" id="totalDetections">0</span>
+                </div>
+
+                <div class="stat">
+                    <span class="stat-label">Unique classes</span>
+                    <span class="stat-value" id="uniqueClasses">0</span>
+                </div>
+
+                <div class="stat">
+                    <span class="stat-label">Risk estimate</span>
+                    <span class="stat-value" id="riskSummary">—</span>
+                </div>
+            </div>
+
+            <h2>Annotated Road Image</h2>
+            <p class="muted">
+                Bounding boxes show objects detected by the model.
+            </p>
+            <img id="resultImage" class="result-image hidden"
+                 alt="Annotated road damage detection">
+
+            <h2>Detected Objects</h2>
+            <div id="detectionList" class="result-list"></div>
+
+            <h2 style="margin-top: 24px;">Risk Assessment</h2>
+            <div class="risk">
+                <div id="riskValue" class="risk-value">Not assessed</div>
+                <p id="riskExplanation" class="muted"></p>
+            </div>
+
+            <div class="actions">
+                <button id="downloadButton" class="secondary hidden"
+                        type="button">
+                    Download Annotated Image
+                </button>
+
+                <button id="newAnalysisButton" type="button">
+                    Analyze Another Image
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        GeoShield AI · Road Damage Detection · Computer Vision
+    </footer>
+
+    <script>
+        const uploadForm = document.getElementById("uploadForm");
+        const imageInput = document.getElementById("imageInput");
+        const previewWrap = document.getElementById("previewWrap");
+        const previewImage = document.getElementById("previewImage");
+        const removeButton = document.getElementById("removeButton");
+        const analyzeButton = document.getElementById("analyzeButton");
+        const statusMessage = document.getElementById("statusMessage");
+        const results = document.getElementById("results");
+
+        const totalDetections = document.getElementById("totalDetections");
+        const uniqueClasses = document.getElementById("uniqueClasses");
+        const riskSummary = document.getElementById("riskSummary");
+        const detectionList = document.getElementById("detectionList");
+        const resultImage = document.getElementById("resultImage");
+        const riskValue = document.getElementById("riskValue");
+        const riskExplanation = document.getElementById("riskExplanation");
+        const downloadButton = document.getElementById("downloadButton");
+
+        let previewUrl = null;
+        let resultUrl = null;
+
+        const MAX_SIZE = 10 * 1024 * 1024;
+        const ALLOWED_TYPES = [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "image/bmp"
+        ];
+
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = "message " + type;
+        }
+
+        function clearPreview() {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+                previewUrl = null;
+            }
+
+            previewImage.removeAttribute("src");
+            previewWrap.classList.add("hidden");
+            imageInput.value = "";
+        }
+
+        imageInput.addEventListener("change", function () {
+            const file = imageInput.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                clearPreview();
+                showStatus(
+                    "Unsupported image format. Select JPG, PNG, WEBP, or BMP.",
+                    "error"
+                );
+                return;
+            }
+
+            if (file.size > MAX_SIZE) {
+                clearPreview();
+                showStatus("The image must be smaller than 10 MB.", "error");
+                return;
+            }
+
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+
+            previewUrl = URL.createObjectURL(file);
+            previewImage.src = previewUrl;
+            previewWrap.classList.remove("hidden");
+            results.classList.add("hidden");
+            statusMessage.className = "message hidden";
+        });
+
+        removeButton.addEventListener("click", function () {
+            clearPreview();
+            statusMessage.className = "message hidden";
+        });
+
+        function getClassName(detection) {
+            return detection.class_name ??
+                   detection.class ??
+                   detection.name ??
+                   "Unknown class";
+        }
+
+        function getConfidence(detection) {
+            if (typeof detection.confidence_percent === "number") {
+                return Math.min(
+                    100,
+                    Math.max(0, detection.confidence_percent)
+                );
+            }
+
+            if (typeof detection.confidence === "number") {
+                return Math.min(
+                    100,
+                    Math.max(0, detection.confidence * 100)
+                );
+            }
+
+            return null;
+        }
+
+        function addTextElement(parent, tag, text, className) {
+            const element = document.createElement(tag);
+            element.textContent = text;
+
+            if (className) {
+                element.className = className;
+            }
+
+            parent.appendChild(element);
+            return element;
+        }
+
+        function assessRisk(detections) {
+            /*
+             * This is only a demonstration heuristic based on detection
+             * count. It is not a validated engineering safety assessment.
+             * A production system should use validated damage classes,
+             * severity, dimensions, and road-safety criteria.
+             */
+            if (detections.length >= 5) {
+                return {
+                    level: "HIGH",
+                    className: "risk-high",
+                    explanation:
+                        "Multiple objects were detected. Manual road inspection is recommended."
+                };
+            }
+
+            if (detections.length >= 2) {
+                return {
+                    level: "MEDIUM",
+                    className: "risk-medium",
+                    explanation:
+                        "Several objects were detected. Review the annotated image."
+                };
+            }
+
+            if (detections.length === 1) {
+                return {
+                    level: "REVIEW",
+                    className: "risk-medium",
+                    explanation:
+                        "An object was detected. Verify the type and severity before taking action."
+                };
+            }
+
+            return {
+                level: "NO DETECTIONS",
+                className: "risk-low",
+                explanation:
+                    "The model did not detect objects above its confidence threshold. This does not guarantee the road is damage-free."
+            };
+        }
+
+        function displayResults(data) {
+            if (!data || !Array.isArray(data.detections)) {
+                throw new Error(
+                    "The server response is missing the detections array. Check the backend JSON response."
+                );
+            }
+
+            const detections = data.detections;
+            const classes = new Set(
+                detections.map(getClassName)
+            );
+
+            totalDetections.textContent = detections.length;
+            uniqueClasses.textContent = classes.size;
+
+            detectionList.replaceChildren();
+
+            if (detections.length === 0) {
+                addTextElement(
+                    detectionList,
+                    "p",
+                    "No objects were detected above the model confidence threshold.",
+                    "muted"
+                );
+            }
+
+            detections.forEach(function (detection, index) {
+                const card = document.createElement("div");
+                card.className = "detection";
+
+                const top = document.createElement("div");
+                top.className = "detection-top";
+
+                addTextElement(
+                    top,
+                    "span",
+                    (index + 1) + ". " + getClassName(detection)
+                );
+
+                const confidence = getConfidence(detection);
+
+                addTextElement(
+                    top,
+                    "span",
+                    confidence === null
+                        ? "Confidence unavailable"
+                        : "Confidence: " + confidence.toFixed(2) + "%"
+                );
+
+                card.appendChild(top);
+
+                if (confidence !== null) {
+                    const track = document.createElement("div");
+                    track.className = "confidence-track";
+
+                    const bar = document.createElement("div");
+                    bar.className = "confidence-bar";
+                    bar.style.width = confidence + "%";
+
+                    track.appendChild(bar);
+                    card.appendChild(track);
+                }
+
+                if (detection.bbox) {
+                    addTextElement(
+                        card,
+                        "p",
+                        "Bounding box: " +
+                        [
+                            detection.bbox.x1,
+                            detection.bbox.y1,
+                            detection.bbox.x2,
+                            detection.bbox.y2
+                        ].join(", "),
+                        "muted"
+                    );
+                }
+
+                detectionList.appendChild(card);
+            });
+
+            const risk = assessRisk(detections);
+
+            riskValue.textContent = risk.level;
+            riskValue.className = "risk-value " + risk.className;
+            riskSummary.textContent = risk.level;
+            riskExplanation.textContent = risk.explanation;
+
+            if (resultUrl) {
+                URL.revokeObjectURL(resultUrl);
+                resultUrl = null;
+            }
+
+            resultImage.classList.add("hidden");
+            downloadButton.classList.add("hidden");
+
+            if (data.annotated_image) {
+                /*
+                 * Flask normally returns a root-relative URL such as
+                 * /uploads/results/annotated_example.jpg.
+                 */
+                const imagePath = new URL(
+                    data.annotated_image,
+                    window.location.origin
+                );
+
+                if (imagePath.origin !== window.location.origin) {
+                    throw new Error(
+                        "The annotated image URL must belong to this server."
+                    );
+                }
+
+                resultUrl = imagePath.href;
+                resultImage.src = resultUrl;
+                resultImage.classList.remove("hidden");
+                downloadButton.classList.remove("hidden");
+            }
+
+            results.classList.remove("hidden");
+            showStatus(
+                "Analysis completed successfully.",
+                "success"
+            );
+
+            results.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+        }
+
+        uploadForm.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const file = imageInput.files[0];
+
+            if (!file) {
+                showStatus("Please select an image first.", "error");
+                return;
+            }
+
+            if (!ALLOWED_TYPES.includes(file.type) ||
+                file.size > MAX_SIZE) {
+                showStatus(
+                    "Select a supported image smaller than 10 MB.",
+                    "error"
+                );
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("image", file);
+
+            analyzeButton.disabled = true;
+            analyzeButton.textContent = "Analyzing...";
+            results.classList.add("hidden");
+
+            showStatus(
+                "GeoShield AI is analyzing the image. Please wait...",
+                "info"
+            );
+
+            try {
+                const response = await fetch("/analyze", {
+                    method: "POST",
+                    body: formData
+                });
+
+                let data;
+
+                try {
+                    data = await response.json();
+                } catch (_error) {
+                    throw new Error(
+                        "The server did not return valid JSON. Check the Flask terminal."
+                    );
+                }
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.error ||
+                        data.details ||
+                        "Image analysis failed with status " +
+                        response.status
+                    );
+                }
+
+                if (data.success === false) {
+                    throw new Error(
+                        data.error || "Image analysis failed."
+                    );
+                }
+
+                displayResults(data);
+
+            } catch (error) {
+                console.error("GeoShield analysis error:", error);
+
+                showStatus(
+                    error.message ||
+                    "Unable to analyze the image. Check the server.",
+                    "error"
+                );
+
+            } finally {
+                analyzeButton.disabled = false;
+                analyzeButton.textContent = "Analyze Image";
+            }
+        });
+
+        downloadButton.addEventListener("click", async function () {
+            if (!resultUrl) {
+                return;
+            }
+
+            try {
+                const response = await fetch(resultUrl);
+
+                if (!response.ok) {
+                    throw new Error("Could not download the annotated image.");
+                }
+
+                const blob = await response.blob();
+                const temporaryUrl = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+
+                link.href = temporaryUrl;
+                link.download = "geoshield_annotated.jpg";
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+
+                URL.revokeObjectURL(temporaryUrl);
+
+            } catch (error) {
+                showStatus(error.message, "error");
+            }
+        });
+
+        document.getElementById("newAnalysisButton")
+            .addEventListener("click", function () {
+                results.classList.add("hidden");
+                clearPreview();
+                statusMessage.className = "message hidden";
+
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
+                });
+            });
+    </script>
+</body>
+</html>
